@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Toamek Sales Dashboard</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#e9f1ec;--card:#fff;--ink:#0f1f17;--mute:#6b7c72;--line:#e3ebe6;--g:#2fb344;--gd:#0d2a1a;--gl:#dcefe2;--warn:#e0803a;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#07140d;--card:#10241a;--ink:#eaf5ee;--mute:#8fa598;--line:#1d3828;--gl:#17392a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#07140d;--card:#10241a;--ink:#eaf5ee;--mute:#8fa598;--line:#1d3828;--gl:#17392a;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;padding:18px}
+.wrap{max-width:1100px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;flex-wrap:wrap}
+h1{margin:0;font-size:26px}.sub{color:var(--mute);font-size:13px;margin-top:2px}
+.pill{background:var(--gd);color:#fff;border-radius:99px;padding:9px 16px;font-size:13px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(12,1fr)}
+.card{background:var(--card);border-radius:18px;padding:18px;border:1px solid var(--line);min-width:0}
+.k{grid-column:span 3}.dark{background:linear-gradient(135deg,#0d2a1a,#145a2e);color:#fff;border:0}
+.lbl{font-size:12px;color:var(--mute)}.dark .lbl{color:#b7d9c3}
+.big{font-size:30px;font-weight:700;margin:6px 0 4px}.chg{font-size:12px;color:var(--g)}.dark .chg{color:#7ee08f}
+.c8{grid-column:span 8}.c4{grid-column:span 4}.c12{grid-column:span 12}.c6{grid-column:span 6}
+h2{font-size:15px;margin:0 0 12px}
+.green{background:var(--gl);border:0}
+.row{display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line);font-size:13px}
+.green .row{border-color:rgba(47,179,68,.25)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{color:var(--mute);font-weight:500;text-align:left;padding:8px 6px;font-size:12px}
+td{padding:11px 6px;border-top:1px solid var(--line)}
+.bar{height:8px;border-radius:9px;background:var(--line);min-width:70px}.bar i{display:block;height:100%;border-radius:9px;background:var(--g)}
+.tag{background:var(--gl);border-radius:8px;padding:3px 9px;font-size:12px}
+.tag.w{background:#fbe8d7;color:#9a4d12}
+.scroll{overflow-x:auto}
+.legend{display:flex;flex-direction:column;gap:7px;font-size:12px}.legend b{font-weight:600}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px}
+.note{font-size:12px;color:var(--mute);margin-top:12px;line-height:1.5}
+@media(max-width:800px){.k{grid-column:span 6}.c8,.c4,.c6{grid-column:span 12}}
+</style></head><body><div class="wrap">
+<header><div><h1>Sales Dashboard</h1><div class="sub">Toamek · stall &amp; order breakdown · all amounts in ₹</div></div><div class="pill" id="pill"></div></header>
+<div class="grid">
+<div class="card k dark"><div class="lbl">Total Sales</div><div class="big" id="k1"></div><div class="chg" id="k1s"></div></div>
+<div class="card k"><div class="lbl">Est. Net Profit (80% margin)</div><div class="big" id="k2"></div><div class="chg" id="k2s"></div></div>
+<div class="card k"><div class="lbl">Average Sale per Event</div><div class="big" id="k3"></div><div class="chg" id="k3s"></div></div>
+<div class="card k"><div class="lbl">Pending Balance</div><div class="big" id="k4" style="color:var(--warn)"></div><div class="lbl" id="k4s"></div></div>
+
+<div class="card c8"><h2>Sales by Event</h2><svg id="bars" viewBox="0 0 640 280" width="100%" role="img" aria-label="Sales by event bar chart"></svg></div>
+<div class="card c4 green"><div class="lbl">Estimated net profit</div><div class="big" id="gp" style="font-size:34px"></div>
+<div class="row"><span>Profit margin (avg.)</span><b>80%</b></div>
+<div class="row"><span>Est. cost / expenses (20%)</span><b id="gc"></b></div>
+<div class="row"><span>Cash collected so far</span><b id="gcol"></b></div>
+<div class="row"><span>Profit on collected cash</span><b id="gpc"></b></div></div>
+
+<div class="card c6"><h2>Share of Total Sales</h2><div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap"><svg id="donut" viewBox="0 0 160 160" width="170" height="170" role="img" aria-label="Sales share donut"></svg><div class="legend" id="leg"></div></div></div>
+<div class="card c6"><h2>Running Total (in listed order)</h2><svg id="line" viewBox="0 0 520 220" width="100%" role="img" aria-label="Cumulative sales line"></svg></div>
+
+<div class="card c12"><h2>Detailed Breakdown</h2><div class="scroll"><table><thead><tr><th>#</th><th>Event / Source</th><th>Sales</th><th>Share</th><th></th><th>Est. Profit (80%)</th><th>Status</th></tr></thead><tbody id="tb"></tbody></table></div></div>
+
+<div class="card c12"><h2>Jeeviga School Pre-order Check</h2>
+<div class="row" style="border:0"><span>3 items × ₹499</span><b>₹1,497</b></div>
+<div class="row"><span>Order value recorded</span><b>₹1,500</b></div>
+<div class="row"><span>Advance paid</span><b>₹220</b></div>
+<div class="row"><span>Balance to collect</span><b style="color:var(--warn)">₹1,280</b></div>
+<div class="note">Assumption: the ₹1,500 pre-order counts in total sales (₹3 rounding vs 3 × ₹499 = ₹1,497) and only the ₹220 advance has been received. Profit is estimated at a flat 80% margin on all sales — actual cost data would make it exact.</div></div>
+</div></div>
+<script>
+const M=.8;
+const D=[["POPUP Culture Stall",5630],["2nd Stall – Apartment",2730],["IVB",1404],["Jeeviga School",240],["Jeeviga School Pre-order",1500,220],["IVB (22nd)",2049]];
+const C=["#145a2e","#2fb344","#7ee08f","#a8d5b5","#e0803a","#5b8f6e"];
+const f=n=>"₹"+Math.round(n).toLocaleString("en-IN");
+const T=D.reduce((a,d)=>a+d[1],0),P=T*M,pend=1500-220,col=T-pend;
+const $=i=>document.getElementById(i);
+$("pill").textContent=D.length+" sales entries";
+$("k1").textContent=f(T);$("k1s").textContent="Across "+D.length+" events/orders";
+$("k2").textContent=f(P);$("k2s").textContent="≈ "+f(T*(1-M))+" estimated cost";
+$("k3").textContent=f(T/D.length);$("k3s").textContent="Top: "+f(5630)+" (POPUP Culture)";
+$("k4").textContent=f(pend);$("k4s").textContent="Jeeviga pre-order balance";
+$("gp").textContent=f(P);$("gc").textContent=f(T*.2);$("gcol").textContent=f(col);$("gpc").textContent=f(col*M);
+// bars
+let s="",mx=6000,x0=50,w=560,h=220;
+for(let i=0;i<5;i++){const y=20+h-h*i/5/1.2*1.2;const v=mx*i/5;s+=`<line x1="${x0}" x2="${x0+w}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${x0-8}" y="${y+4}" text-anchor="end" font-size="10" fill="var(--mute)">${(v/1000).toFixed(0)}k</text>`}
+const bw=w/D.length;
+D.forEach((d,i)=>{const bh=h*d[1]/mx,x=x0+i*bw+bw*.2,y=20+h-bh;
+s+=`<rect x="${x}" y="${y}" width="${bw*.6}" height="${bh}" rx="6" fill="${i==0?"#145a2e":"#2fb344"}"/><text x="${x+bw*.3}" y="${y-6}" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">${f(d[1])}</text>`;
+const lab=d[0].split(" ");const l1=lab.slice(0,Math.ceil(lab.length/2)).join(" "),l2=lab.slice(Math.ceil(lab.length/2)).join(" ");
+s+=`<text x="${x+bw*.3}" y="256" text-anchor="middle" font-size="9.5" fill="var(--mute)">${l1}</text><text x="${x+bw*.3}" y="268" text-anchor="middle" font-size="9.5" fill="var(--mute)">${l2}</text>`});
+$("bars").innerHTML=s;
+// donut
+let a=-Math.PI/2,ds="",r=60,cx=80,cy=80,lg="";
+D.forEach((d,i)=>{const fr=d[1]/T,b=a+fr*2*Math.PI;const p=(t)=>[cx+r*Math.cos(t),cy+r*Math.sin(t)];
+const [x1,y1]=p(a),[x2,y2]=p(b-.02);ds+=`<path d="M${x1} ${y1}A${r} ${r} 0 ${fr>.5?1:0} 1 ${x2} ${y2}" fill="none" stroke="${C[i]}" stroke-width="22"/>`;a=b;
+lg+=`<div><span class="dot" style="background:${C[i]}"></span>${d[0]} <b>${(fr*100).toFixed(1)}%</b></div>`});
+ds+=`<text x="80" y="76" text-anchor="middle" font-size="11" fill="var(--mute)">Total</text><text x="80" y="94" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">${f(T)}</text>`;
+$("donut").innerHTML=ds;$("leg").innerHTML=lg;
+// line
+let cum=0,pts=D.map((d,i)=>{cum+=d[1];return[40+i*(460/(D.length-1)),190-170*cum/T,cum]});
+let ls=`<line x1="40" x2="500" y1="190" y2="190" stroke="var(--line)"/>`;
+ls+=`<path d="M${pts.map(p=>p[0]+" "+p[1]).join("L")}L500 190L40 190Z" fill="#2fb344" opacity=".15"/><path d="M${pts.map(p=>p[0]+" "+p[1]).join("L")}" fill="none" stroke="#2fb344" stroke-width="3"/>`;
+pts.forEach((p,i)=>{ls+=`<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="#145a2e"/><text x="${p[0]}" y="${p[1]-10}" text-anchor="middle" font-size="10" font-weight="600" fill="var(--ink)">${f(p[2])}</text><text x="${p[0]}" y="207" text-anchor="middle" font-size="10" fill="var(--mute)">#${i+1}</text>`});
+$("line").innerHTML=ls;
+// table
+$("tb").innerHTML=D.map((d,i)=>`<tr><td>${i+1}</td><td><b>${d[0]}</b></td><td>${f(d[1])}</td><td>${(d[1]/T*100).toFixed(1)}%</td><td><div class="bar"><i style="width:${d[1]/5630*100}%"></i></div></td><td>${f(d[1]*M)}</td><td>${d[2]?'<span class="tag w">₹220 advance · ₹1,280 due</span>':'<span class="tag">Received</span>'}</td></tr>`).join("")+
+`<tr style="font-weight:700"><td></td><td>Total</td><td>${f(T)}</td><td>100%</td><td></td><td>${f(P)}</td><td></td></tr>`;
+</script></body></html>
